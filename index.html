@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Love Diary</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Funky+Smile&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to top left, #ff9a9e, #fad0c4);
+      overflow: hidden;
+    }
+    .screen {
+      display: none;
+      height: 100vh;
+      width: 100vw;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
+      animation: fadeIn 1s ease-in-out;
+      padding: 20px;
+    }
+    .screen.active { display: flex; }
+    .typing-container {
+      font-family: 'Pacifico', cursive;
+      font-size: 2.5rem;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      border-right: 3px solid rgba(255,255,255,0.75);
+      width: 32ch;
+      animation: typing 3s steps(32, end) forwards, blink 0.75s step-end infinite;
+    }
+    @keyframes typing {
+      from { width: 0 }
+      to { width: 32ch; }
+    }
+    @keyframes blink {
+      50% { border-color: transparent }
+    }
+    .book {
+      position: relative;
+      width: 90%;
+      max-width: 600px;
+      height: 400px;
+      perspective: 1200px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .page {
+      border-radius: 10px;
+      padding: 20px;
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      transform-origin: left;
+      transition: transform 1s ease, opacity 1s ease;
+      backface-visibility: hidden;
+      overflow-y: auto;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: left;
+      font-size: 1rem;
+      line-height: 1.6;
+      font-family: 'Funky Smile', cursive;
+    }
+    .page:nth-child(1) { background: linear-gradient(to right, #fbc2eb, #a6c1ee); }
+    .page:nth-child(2) { background: linear-gradient(to right, #fddb92, #d1fdff); }
+    .page:nth-child(3) { background: linear-gradient(to right, #84fab0, #8fd3f4); }
+    .page:nth-child(4) { background: linear-gradient(to right, #fccb90, #d57eeb); }
+    .page:nth-child(5) { background: linear-gradient(to right, #a1c4fd, #c2e9fb); }
+    .page:nth-child(6) { background: linear-gradient(to right, #f6d365, #fda085); }
+    .page:nth-child(7) { background: linear-gradient(to right, #ffecd2, #fcb69f); }
+    .page.flipped {
+      transform: rotateY(-180deg);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .button {
+      padding: 12px 24px;
+      margin: 10px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 20px;
+      background-color: #ff5e78;
+      color: white;
+      cursor: pointer;
+      z-index: 1000;
+    }
+    .controls {
+      margin-top: 20px;
+      z-index: 1000;
+    }
+    .popup, .final-message, .game, .vault {
+      padding: 30px;
+      border-radius: 25px;
+      text-align: center;
+      animation: fadeIn 1s ease-in-out;
+      background: linear-gradient(135deg, #ffe0ec, #f9f5ff, #e0eaff);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      color: #4b006e;
+      font-weight: 500;
+      max-width: 90%;
+      z-index: 9999;
+    }
+    .anniversary {
+      color: #fff;
+      margin-bottom: 20px;
+      font-weight: 500;
+      font-size: 1rem;
+    }
+    .floating-emoji {
+      position: fixed;
+      font-size: 26px;
+      animation: floatUp 6s linear forwards;
+      pointer-events: none;
+      z-index: 999;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(1); opacity: 1; }
+      100% { transform: translateY(-100vh) scale(1.5); opacity: 0; }
+    }
+    a.spotify-link {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 12px 24px;
+      font-size: 1.2rem;
+      color: white;
+      background-color: #1DB954;
+      border-radius: 30px;
+      text-decoration: none;
+      opacity: 0;
+      transition: opacity 2s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+<audio id="bg-music" loop>
+  <source src="music.mp3" type="audio/mpeg" />
+</audio>
+
+<div id="home" class="screen active">
+  <div class="typing-container">Hi Pranjal aka The Cutie ❤️</div>
+  <p style="color: white; margin-top: 20px;">I made something special for you 💌</p>
+  <button class="button" id="start-btn">Open Surprise</button>
+</div>
+
+<div id="diary" class="screen">
+  <div class="anniversary" id="anniversary-stats"></div>
+  <h1 style="color:white;">Our Story 📖</h1>
+  <div class="book" id="book"></div>
+  <div class="controls">
+    <button class="button" id="prev">⬅</button>
+    <button class="button" id="next">➡</button>
+  </div>
+</div>
+
+<div id="popup" class="screen">
+  <div class="popup">
+    <h2>There's more, wanna see?</h2>
+    <button class="button" id="to-game">Yes 😍</button>
+    <button class="button" id="to-game-2">Of course 😝💗</button>
+  </div>
+</div>
+
+<div id="game" class="screen">
+  <div class="game">
+    <h2>Help Pranjal reach the heart 💖</h2>
+    <p>Tap the heart 3 times to unlock the surprise!</p>
+    <button class="button" id="heart-btn">❤️</button>
+    <p id="tap-count">Taps: 0/3</p>
+  </div>
+</div>
+
+<div id="reveal" class="screen">
+  <div class="final-message">
+    <h2>These are some songs I dedicate to You my World 🌍🧿😘</h2>
+    <a href="https://open.spotify.com/playlist/4UPMzNv731bYWLQeLhAj9w?si=57616c77ac1e4cfa"
+       target="_blank"
+       class="spotify-link"
+       id="spotify-link">🎶 Take a look 😉</a>
+    <br><br>
+    <button class="button" id="vault-btn">Enter Vault 🔐</button>
+  </div>
+</div>
+
+<div id="vault" class="screen">
+  <div class="vault">
+    <p><strong>Hint:</strong> what do you call me? 😉</p>
+    <input type="text" id="vault-input" placeholder="Enter password..." class="button" style="color:#4b006e; background:#fff;" />
+    <button class="button" id="vault-submit">Unlock</button>
+    <div id="vault-message" style="margin-top:20px; display:none;"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script>
+const music = document.getElementById("bg-music");
+const stats = document.getElementById("anniversary-stats");
+  const pagesContent = [
+`Since the day I met you (didn't meet to be exact) my whole life turned upside down 😳, I went from a guy going into depression 😞 to a guy who was totally in love with a girl 🥰, not just any girl — THE GIRL ❤️ who told me I am worth something, THE GIRL who gave me butterflies 🦋 in my stomach, THE GIRL who didn't judge me by my looks, THE GIRL who made me realise what love is 💕, THE GIRL that became my home 🏠 — my safeplace. And THE GIRL is none other than you, my dearest Pranjal, my Cutestestest Babyy <3 [a very good girl :)] 😘`,
+
+`We had some rough moments in our lives 😔 but we fought through them 💪, made many mistakes but fixed them together. The kind of love we have… I bet nobody can have that same kind of love 😌. Our bond is so special to me that I can't even imagine what I would do without you. Many people tried to break us (R for Randi iykyk 😏) but what did we do? Proved them wrong obv XD. I love you like nobody never has or nobody ever will 😘. You're the girl who was willing to change yourself just to see me happy 🥹 and that literally makes me wanna cry (tears of joy). Whenever we fight I feel so bad and I hate myself for even arguing with you in the first place 😭. You're the girl I love most in this whole world and all I want is YOU standing right beside me forever and ever ❤️.`,
+
+`March 27 2024 was probably the worst day of my entire life 💔. I thought I lost you. I didn't realise it in that moment that I'm letting go the only girl that truly loves me. My foolishness took over me and did the worst thing possible — I broke up with you 😖. After that, everything suddenly went silent… I did not know what to do. My closest person was no longer with me… and after that the misery started. Every day I went through hell 😭, crying, sobbing, heart pounding like it's gonna burst out of my chest the very next second 💔. That month makes my heart heavy till this day.`,
+
+`
+
+
+
+
+
+But you know what? Even after all that pain, we found our way back to each other 🥹. April 22 2024 — that’s the day I realised nothing, not even the worst fights, can break what we have 💪. You are my home, my peace, my comfort in this noisy world 🌎❤️. After everything that happened I thought I lost you forever but one random day, I saw you in school and that's when my heart went reverse gear 😳. I couldn't hold it inside me anymore — as soon as I reached home I texted Moksh ranting about how much I love you and how much I need you and begged him to help me get you back. I texted you asking you to talk to me and that was the moment I let it all out — told you how much I miss you 😭, how much I love you ❤️, and ESPECIALLY how big of an idiot I am to let you go 🤦‍♂️. I knew that no matter how many times I apologised it was still not enough but somehow you forgave me 😭. I FUCKING FROZE. I didn't know what to do — every emotion in me was screaming with joy 🥳. I was probably the happiest man alive that day and I'm very thankful to you that you gave me another chance to prove myself. Remember… I'll always love you no matter what because you're THE GIRL who rules over my dream world and my real world 🏰. Actuallyyyy, my whole world revolves around you… nuh uh — YOU’RE my whole world 🌎❤️.`,
+
+`Lemme be honest with you — sometimes I still can’t wrap my head around the fact that you’re mine 😭. Like, I’ll just be sitting there doing nothing and suddenly it hits me — “holy shit, I actually got her.” You know how I was before, right? All messed up, barely holding it together 😞. And then outta nowhere, you walked in like the biggest plot twist ever 🤯. You didn’t just make me feel loved, you actually made me wanna be better 😌. And that’s the thing — I don’t just like being with you, I like me when I’m with you 💕. Everything feels lighter. I don’t have to fake stuff or pretend to be fine; I can just be this idiot version of me who rants about random things and still gets a “you’re cute” from you 🥺. And lowkey? That’s my favorite part about us — we’re not perfect, we fight, we mess up, but we always figure it out 😌. And I’m so glad we do, ‘cause I can’t see myself starting over with anyone else. It’s you or nothing, fr ❤️.`,
+
+`I wanna tell you something I don’t say enough — thank you 🙏. Like, genuinely, thank you for sticking around when it got rough, for not giving up on me even when I wasn’t the easiest person to love 😔. I know I overthink, get jealous, mess up my words… but you still choose me, every single time ❤️. And I don’t take that for granted. I wanna do the same for you — be there when you need me, hype you up when you’re doubting yourself, listen to every rant even if it’s about something I don’t understand 😅. I wanna be that safe place for you, the way you are for me 🏡. And honestly, I think about our future a lot — not in a scary way but in a “I can’t wait” kinda way 🥰. Like us doing dumb grocery shopping, cooking at 1 AM, me stealing food off your plate 🍽️, you yelling at me but smiling anyway 😆… all that basic couple stuff, I want it. I want you in every version of my life — broke, rich, happy, sad — whatever. If it’s with you, I’m good. Always ❤️.`,
+
+`This may just be a diary... but everything in it is a piece of my heart. 💖  
+I love you endlessly, and I always will.  
+Thank you for being mine, Pranjal. 🥺❤️`
+  ];
+
+const home = document.getElementById("home");
+const diary = document.getElementById("diary");
+const popup = document.getElementById("popup");
+const game = document.getElementById("game");
+const reveal = document.getElementById("reveal");
+const vault = document.getElementById("vault");
+const spotifyLink = document.getElementById("spotify-link");
+const book = document.getElementById("book");
+const vaultBtn = document.getElementById("vault-btn");
+const vaultInput = document.getElementById("vault-input");
+const vaultSubmit = document.getElementById("vault-submit");
+const vaultMessage = document.getElementById("vault-message");
+
+let current = 0, heartTaps = 0;
+
+function playSound(src) {
+  const audio = new Audio(src);
+  audio.play();
+}
+
+pagesContent.forEach((text, i) => {
+  const page = document.createElement("div");
+  page.className = "page";
+  page.innerText = text;
+  page.style.zIndex = pagesContent.length - i;
+  book.appendChild(page);
+});
+const pages = document.querySelectorAll(".page");
+
+document.getElementById("start-btn").onclick = () => {
+  music.volume = 0;
+  music.play().then(() => {
+    let vol = 0;
+    const fade = setInterval(() => {
+      if (vol < 1) {
+        vol += 0.02;
+        music.volume = Math.min(vol, 1);
+      } else clearInterval(fade);
+    }, 100);
+  });
+  home.classList.remove("active");
+  diary.classList.add("active");
+  updateAnniversary();
+};
+
+document.getElementById("next").onclick = () => {
+  if (current < pages.length) {
+    pages[current].classList.add("flipped");
+    playSound("click.mp3");
+    current++;
+    if (current === pages.length) {
+      diary.classList.remove("active");
+      popup.classList.add("active");
+    }
+  }
+};
+document.getElementById("prev").onclick = () => {
+  if (current > 0) {
+    current--;
+    pages[current].classList.remove("flipped");
+    playSound("click.mp3");
+  }
+};
+
+const toGame1 = document.getElementById("to-game");
+const toGame2 = document.getElementById("to-game-2");
+[toGame1, toGame2].forEach(btn => {
+  btn.onclick = () => {
+    popup.classList.remove("active");
+    game.classList.add("active");
+  };
+});
+
+document.getElementById("heart-btn").onclick = () => {
+  heartTaps++;
+  document.getElementById("tap-count").innerText = `Taps: ${heartTaps}/3`;
+  playSound("heart.mp3");
+  if (heartTaps >= 3) {
+    game.classList.remove("active");
+    reveal.classList.add("active");
+    setTimeout(() => {
+      spotifyLink.style.opacity = 1;
+      playSound("confetti.mp3");
+      confetti({ particleCount: 300, spread: 90, origin: { y: 0.6 }, emojis: ['😍'] });
+    }, 800);
+  }
+};
+
+vaultBtn.onclick = () => {
+  reveal.classList.remove("active");
+  vault.classList.add("active");
+};
+
+vaultSubmit.onclick = () => {
+  if (vaultInput.value.trim().toLowerCase() === "princess") {
+    playSound("unlock.mp3");
+    vaultMessage.style.display = "block";
+    vaultMessage.innerHTML = `
+      <p>Damn... You actually cracked the vault? 😳<br>
+      Okay Bbg, that means you officially earned the right to:</p>
+      <ul style="text-align:left;">
+        <li>💋 drown me in kisses,</li>
+        <li>🤗 suffocate me in those big tight hugs,</li>
+        <li>📸 bless me with those sneakyyy snaps I keep begging for 😝,</li>
+        <li>and maybe even… I earn some special treatment that only you can give to me 🤭</li>
+      </ul>
+      <p>But only because it's you... 😉<br><br>
+      Because you really are something else. My one and only. Always. ❤️</p>
+    `;
+  } else {
+    alert("Wrong password, try again cutie 💗");
+  }
+};
+
+function updateAnniversary() {
+  const start = new Date('2023-01-01');
+  const today = new Date();
+  const nextAnniversary = new Date(today.getFullYear() + (today > new Date(today.getFullYear(), 0, 1) ? 1 : 0), 0, 1);
+  const daysPassed = Math.floor((today - start) / (1000 * 60 * 60 * 24));
+  const daysUntil = Math.ceil((nextAnniversary - today) / (1000 * 60 * 60 * 24));
+  stats.innerText = `📆 Since Jan 1, 2023 — ${daysPassed} days passed ❤️ | 🎉 Until Jan 1, ${nextAnniversary.getFullYear()} — ${daysUntil} days left 💕`;
+}
+
+function spawnFloatingEmoji(emoji) {
+  const el = document.createElement('div');
+  el.className = 'floating-emoji';
+  el.innerText = emoji;
+  el.style.left = Math.random() * 100 + 'vw';
+  el.style.top = '100vh';
+  el.style.animationDuration = (4 + Math.random() * 2) + 's';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 7000);
+}
+setInterval(() => {
+  spawnFloatingEmoji(Math.random() > 0.5 ? '❤️' : '😛');
+}, 800);
+</script>
+</body>
+</html>
